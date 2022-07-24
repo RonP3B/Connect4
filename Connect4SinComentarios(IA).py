@@ -166,7 +166,7 @@ def play_human_ply(board: ConnectFour, col: int) -> None:
     change_turn() 
        
 def play_AI_ply(board: ConnectFour, total_time: int):
-    start_time, curr_time = time.time(), 0
+    start_time = time.time()
     
     depth = 1
     max_depth_allowed = 100

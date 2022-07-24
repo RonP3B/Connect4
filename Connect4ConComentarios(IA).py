@@ -453,7 +453,7 @@ def play_AI_ply(board: ConnectFour, total_time: int):
     """
     
     #Variables para llevar un rastreo del tiempo
-    start_time, curr_time = time.time(), 0
+    start_time = time.time()
     
     # Profundidad inicial
     depth = 1
@@ -465,7 +465,8 @@ def play_AI_ply(board: ConnectFour, total_time: int):
     ply = None
     
     # bucle que aplica el IDS, se ejecuta si no se ha alcanzado la profundidad
-    # maxima permitida Y si el tiempo dado no ha acabado
+    # maxima permitida Y si el tiempo dado no ha acabado.
+    # el 'time.time() - start_time' obtiene los segundos que han pasado
     while depth < max_depth_allowed and not time.time() - start_time >= total_time:
         
         # Se obtiene el mejor estado de juego dentro de la profundidad actual
