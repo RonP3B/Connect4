@@ -795,8 +795,8 @@ def main():
             # Se borra la ficha del jugador humano
             remove_piece_from_top()
             
-            # Se juega el turno de la AI con un limite de 3 segundos
-            play_AI_ply(board, 3)
+            # Se juega el turno de la AI con un limite de 2.5 segundos
+            play_AI_ply(board, 2.5)
         
             # Se verifica si la AI ganó el juego o si quedó empate
             is_goal_state(board, AI_PLAYER)

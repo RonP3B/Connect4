@@ -308,7 +308,7 @@ def main():
 
         if turn == AI_PLAYER and not game_over:
             remove_piece_from_top()
-            play_AI_ply(board, 3)
+            play_AI_ply(board, 2.5)
             is_goal_state(board, AI_PLAYER)
             draw_board(board)
              
