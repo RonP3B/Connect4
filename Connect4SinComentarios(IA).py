@@ -3,6 +3,7 @@ import pygame
 import sys
 import math
 import copy
+import time
 
 class ConnectFour():
     def __init__(self, board: list, rows: int, columns: int, parent = None):
@@ -164,8 +165,19 @@ def play_human_ply(board: ConnectFour, col: int) -> None:
     
     change_turn() 
        
-def play_AI_ply(board: ConnectFour, depth: int):
-    ply = decision(board, AI_PLAYER, depth)
+def play_AI_ply(board: ConnectFour, total_time: int):
+    start_time, curr_time = time.time(), 0
+    
+    depth = 1
+    max_depth_allowed = 100
+    
+    ply = None
+    
+    while depth < max_depth_allowed and not time.time() - start_time >= total_time:
+        ply = decision(board, AI_PLAYER, depth)
+        depth += 1
+       
+    print(f"Profundidad alcanzada: {depth - 1}\n")
     
     board.board = ply.board
     
@@ -296,7 +308,7 @@ def main():
 
         if turn == AI_PLAYER and not game_over:
             remove_piece_from_top()
-            play_AI_ply(board, 4)
+            play_AI_ply(board, 3)
             is_goal_state(board, AI_PLAYER)
             draw_board(board)
              

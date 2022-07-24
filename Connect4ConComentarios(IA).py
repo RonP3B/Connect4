@@ -4,6 +4,7 @@ import pygame  # Requiere instalación
 import sys
 import math
 import copy
+import time
 
 #***********************************Clase ConnectFour***********************************#
 class ConnectFour():
@@ -445,14 +446,36 @@ def play_human_ply(board: ConnectFour, col: int) -> None:
     # Se cambian los turnos
     change_turn() 
        
-def play_AI_ply(board: ConnectFour, depth: int):
+def play_AI_ply(board: ConnectFour, total_time: int):
     """
     Juega el turno de la AI aplicando el algoritmo minimax con podado
-    alpha beta a una profundidad limitada según el parametro 'depth'.
+    alpha beta mediante un IDS limitado por los segundos especificados.
     """
     
-    # Se decide y se obtiene el mejor estado de juego
-    ply = decision(board, AI_PLAYER, depth)
+    #Variables para llevar un rastreo del tiempo
+    start_time, curr_time = time.time(), 0
+    
+    # Profundidad inicial
+    depth = 1
+    
+    # Profundidad maxima permitida
+    max_depth_allowed = 100
+    
+    # Variable que almacenará la mejor jugada
+    ply = None
+    
+    # bucle que aplica el IDS, se ejecuta si no se ha alcanzado la profundidad
+    # maxima permitida Y si el tiempo dado no ha acabado
+    while depth < max_depth_allowed and not time.time() - start_time >= total_time:
+        
+        # Se obtiene el mejor estado de juego dentro de la profundidad actual
+        ply = decision(board, AI_PLAYER, depth)
+        
+        # Se aumenta la profundidad actual
+        depth += 1
+       
+    # Informa la profundidad alcanzada
+    print(f"Profundidad alcanzada: {depth - 1}\n")
     
     # Se cambia el tablero actual por el tablero obtenido que contiene la
     # jugada de la AI
@@ -772,8 +795,8 @@ def main():
             # Se borra la ficha del jugador humano
             remove_piece_from_top()
             
-            # Se juega el turno de la AI
-            play_AI_ply(board, 4)
+            # Se juega el turno de la AI con un limite de 3 segundos
+            play_AI_ply(board, 3)
         
             # Se verifica si la AI ganó el juego o si quedó empate
             is_goal_state(board, AI_PLAYER)
