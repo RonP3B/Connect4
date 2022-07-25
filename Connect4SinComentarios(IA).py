@@ -235,7 +235,7 @@ def decision(state: ConnectFour, piece: int, depth: int) -> ConnectFour:
 
     return child
     
-def eval_space(piece: ConnectFour, space: int) -> int:
+def eval_space(piece: int, space: list) -> int:
     utility = 0
     
     opp_piece = (HUMAN_PLAYER, AI_PLAYER)[piece == HUMAN_PLAYER]
@@ -308,7 +308,7 @@ def main():
 
         if turn == AI_PLAYER and not game_over:
             remove_piece_from_top()
-            play_AI_ply(board, 2.5)
+            play_AI_ply(board, 2)
             is_goal_state(board, AI_PLAYER)
             draw_board(board)
              

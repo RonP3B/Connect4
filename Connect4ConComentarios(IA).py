@@ -623,7 +623,7 @@ def decision(state: ConnectFour, piece: int, depth: int) -> ConnectFour:
     # Se retorna el estado de juego obtenido
     return child
     
-def eval_space(piece: ConnectFour, space: int) -> int:
+def eval_space(piece: int, space: list) -> int:
     """
     Evalua la utilidad de un espacio de 4 según las fichas    
     """
@@ -796,8 +796,8 @@ def main():
             # Se borra la ficha del jugador humano
             remove_piece_from_top()
             
-            # Se juega el turno de la AI con un limite de 2.5 segundos
-            play_AI_ply(board, 2.5)
+            # Se juega el turno de la AI con un limite de 2 segundos
+            play_AI_ply(board, 2)
         
             # Se verifica si la AI ganó el juego o si quedó empate
             is_goal_state(board, AI_PLAYER)
