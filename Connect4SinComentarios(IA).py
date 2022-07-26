@@ -1,3 +1,8 @@
+"""
+*Diseño de la ventana del connect 4 referenciado y modificado de: 
+    https://github.com/KeithGalli/Connect4-Python/blob/master/connect4.py
+"""
+
 import numpy as np 
 import pygame  
 import sys
