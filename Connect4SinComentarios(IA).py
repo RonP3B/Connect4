@@ -108,6 +108,10 @@ HUMAN_PLAYER, AI_PLAYER = 1, 2
 
 turn = AI_PLAYER
 
+start_time = total_time = 0
+
+failed_case = (None, None)
+
 pygame.init()
 
 myfont = pygame.font.SysFont("monospace", 75)
@@ -163,23 +167,27 @@ def change_turn() -> None:
     
     turn = (HUMAN_PLAYER, AI_PLAYER)[turn == HUMAN_PLAYER]
     
+def is_time_over(start_time: float, total_time: float) -> bool:
+    return time.time() - start_time >= total_time
+    
 def play_human_ply(board: ConnectFour, col: int) -> None:
     row = board.get_next_open_row(col)
     
     board.drop_piece(row, col, HUMAN_PLAYER)
     
     change_turn() 
-       
-def play_AI_ply(board: ConnectFour, total_time: int):
-    start_time = time.time()
+  
+def play_AI_ply(board: ConnectFour, total_seconds: int):
+    global start_time, total_time
     
-    depth = 1
-    max_depth_allowed = 100
+    total_time, start_time = total_seconds, time.time()
+    
+    depth, max_depth_allowed = 1, 100
     
     ply = None
     
-    while depth < max_depth_allowed and not time.time() - start_time >= total_time:
-        ply = decision(board, AI_PLAYER, depth)
+    while depth < max_depth_allowed and not is_time_over(start_time, total_time):
+        ply = decision(board, AI_PLAYER, depth, ply)
         depth += 1
        
     print(f"Profundidad alcanzada: {depth - 1}\n")
@@ -197,13 +205,17 @@ max_depth = 0
 def is_terminal(state: ConnectFour) -> bool:
     return state.test_win(AI_PLAYER) or state.test_win(HUMAN_PLAYER) or state.test_tie()
     
-def min_value(state, alpha, beta, piece, opp_piece, curr_depth = 0) -> tuple:       
+def min_value(state:ConnectFour, alpha, beta, piece:int, opp_piece:int, curr_depth = 0) -> tuple:       
+    if is_time_over(start_time, total_time): return failed_case
+    
     if is_terminal(state) or curr_depth == max_depth: return (None, eval(state, piece))
     
     minChild, minUtility = None, math.inf 
     
     for child in state.expand(opp_piece):
         _, utility = max_value(child, alpha, beta, piece, opp_piece, curr_depth + 1)
+        
+        if utility == None: return failed_case
            
         if utility < minUtility: minChild, minUtility = child, utility
         
@@ -213,13 +225,17 @@ def min_value(state, alpha, beta, piece, opp_piece, curr_depth = 0) -> tuple:
                  
     return (minChild, minUtility)
         
-def max_value(state: ConnectFour, alpha, beta, piece: int, opp_piece: int, curr_depth: int = 0) -> tuple:        
+def max_value(state:ConnectFour, alpha, beta, piece:int, opp_piece:int, curr_depth:int = 0) -> tuple:        
+    if is_time_over(start_time, total_time): return failed_case
+    
     if  is_terminal(state) or curr_depth == max_depth: return (None, eval(state, piece))
 
     maxChild, maxUtility = None, -math.inf 
       
     for child in state.expand(piece): 
         _, utility = min_value(child, alpha, beta, piece, opp_piece, curr_depth + 1) 
+        
+        if utility == None: return failed_case
            
         if utility > maxUtility: maxChild, maxUtility = child, utility 
         
@@ -229,16 +245,16 @@ def max_value(state: ConnectFour, alpha, beta, piece: int, opp_piece: int, curr_
                      
     return (maxChild, maxUtility)
 
-def decision(state: ConnectFour, piece: int, depth: int) -> ConnectFour:     
+def decision(state: ConnectFour, piece: int, depth: int, last_ply: ConnectFour) -> ConnectFour:     
     global max_depth 
 
     max_depth = depth
     
     opp_piece = (HUMAN_PLAYER, AI_PLAYER)[piece == 1]
     
-    child, _ = max_value(state, -math.inf, math.inf, piece, opp_piece)
-
-    return child
+    child, _ = max_value(state, -math.inf, math.inf, piece, opp_piece)   
+    
+    return (last_ply, child)[child != None]
     
 def eval_space(piece: int, space: list) -> int:
     utility = 0

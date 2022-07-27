@@ -317,6 +317,12 @@ HUMAN_PLAYER, AI_PLAYER = 1, 2
 # Variable para llevar un rastreo del turno (Empieza la AI)
 turn = AI_PLAYER
 
+# Para llevar rastreo del tiempo del IDS
+start_time = total_time = 0
+
+# En caso de que alcanze el tiempo maximo y tenga que detener la función 
+failed_case = (None, None)
+
 # Inicializa todo los modulos de pygame
 pygame.init()
 
@@ -437,6 +443,13 @@ def change_turn() -> None:
     # Cambian los turnos (si es el turno del humano cambia al de la AI y viceversa)   
     turn = (HUMAN_PLAYER, AI_PLAYER)[turn == HUMAN_PLAYER]
     
+
+def is_time_over(start_time: float, total_time: float) -> bool:
+    """
+    Verifica si el tiempo total ha acabado
+    """
+    # 'time.time() - start_time' obtiene los segundos que han pasado
+    return time.time() - start_time >= total_time
   
 def play_human_ply(board: ConnectFour, col: int) -> None:
     """
@@ -452,14 +465,15 @@ def play_human_ply(board: ConnectFour, col: int) -> None:
     # Se cambian los turnos
     change_turn() 
        
-def play_AI_ply(board: ConnectFour, total_time: int):
+def play_AI_ply(board: ConnectFour,  total_seconds: int):
     """
     Juega el turno de la AI aplicando el algoritmo minimax con podado
     alpha beta mediante un IDS limitado por los segundos especificados.
     """
+    global start_time, total_time
     
     #Variables para llevar un rastreo del tiempo
-    start_time = time.time()
+    total_time, start_time = total_seconds, time.time()
     
     # Profundidad inicial
     depth = 1
@@ -472,11 +486,10 @@ def play_AI_ply(board: ConnectFour, total_time: int):
     
     # bucle que aplica el IDS, se ejecuta si no se ha alcanzado la profundidad
     # maxima permitida Y si el tiempo dado no ha acabado.
-    # el 'time.time() - start_time' obtiene los segundos que han pasado
-    while depth < max_depth_allowed and not time.time() - start_time >= total_time:
+    while depth < max_depth_allowed and not is_time_over(start_time, total_time):
         
         # Se obtiene el mejor estado de juego dentro de la profundidad actual
-        ply = decision(board, AI_PLAYER, depth)
+        ply = decision(board, AI_PLAYER, depth, ply)
         
         # Se aumenta la profundidad actual
         depth += 1
@@ -529,6 +542,9 @@ def min_value(state, alpha, beta, piece, opp_piece, curr_depth = 0) -> tuple:
     utilidad (valor)
     """
     
+    # Si alcanzó el tiempo maximo retorna el caso de falla
+    if is_time_over(start_time, total_time): return failed_case
+    
     # Si el estado es terminal o si ya se alcanzo la profundidad dada      
     if is_terminal(state) or curr_depth == max_depth: 
         
@@ -544,6 +560,11 @@ def min_value(state, alpha, beta, piece, opp_piece, curr_depth = 0) -> tuple:
         
         # Se obtiene el estado hijo de 'child' de mayor utilidad (_ = estado | utility = utilidad)
         _, utility = max_value(child, alpha, beta, piece, opp_piece, curr_depth + 1)
+        
+        # Si la utilidad que obtuvo es None significa que acabo el tiempo y en lugar de obtener
+        # la evaluacion de la heuristica obtuvo el caso de fallo, por ende lo retornamos de nuevo
+        # para acabar la funcion
+        if utility == None: return failed_case
         
         # Si la utilidad obtenida es menor que la utilidad minima actual               
         if utility < minUtility:
@@ -570,6 +591,9 @@ def max_value(state: ConnectFour, alpha, beta, piece: int, opp_piece: int, curr_
     Partiendo del estado recibido por parametro, retorna su estado hijo de mayor
     utilidad (valor)
     """
+    
+    # Si alcanzó el tiempo maximo retorna el caso de falla
+    if is_time_over(start_time, total_time): return failed_case
 
     # Si el estado es terminal o si ya se alcanzo la profundidad dada         
     if  is_terminal(state) or curr_depth == max_depth: 
@@ -586,6 +610,11 @@ def max_value(state: ConnectFour, alpha, beta, piece: int, opp_piece: int, curr_
         
         # Se obtiene el estado hijo de 'child' de menor utilidad (_ = estado | utility = utilidad)
         _, utility = min_value(child, alpha, beta, piece, opp_piece, curr_depth + 1) 
+        
+        # Si la utilidad que obtuvo es None significa que acabo el tiempo y en lugar de obtener
+        # la evaluacion de la heuristica obtuvo el caso de fallo, por ende lo retornamos de nuevo
+        # para acabar la funcion
+        if utility == None: return failed_case
            
         # Si la utilidad obtenida es mayor que la utilidad maxima actual   
         if utility > maxUtility: 
@@ -607,7 +636,7 @@ def max_value(state: ConnectFour, alpha, beta, piece: int, opp_piece: int, curr_
     # Se retorna una tupla con el estado de mayor utiilidad junto al valor de su utilidad          
     return (maxChild, maxUtility)
 
-def decision(state: ConnectFour, piece: int, depth: int) -> ConnectFour:  
+def decision(state: ConnectFour, piece: int, depth: int, last_ply: ConnectFour) -> ConnectFour:  
     """
     Obtiene el estado de juego con la mayor utilidad
     """
@@ -626,8 +655,9 @@ def decision(state: ConnectFour, piece: int, depth: int) -> ConnectFour:
     # que es lo mismo que: varA = valA | varB = valB
     child, _ = max_value(state, -math.inf, math.inf, piece, opp_piece)
 
-    # Se retorna el estado de juego obtenido
-    return child
+    # Si obtuvo un estado de juego lo retorna, si no, significa que se acabo el tiempo
+    # por ende se retorna la ultima jugada obtenida en el IDS
+    return (last_ply, child)[child != None]
     
 def eval_space(piece: int, space: list) -> int:
     """
